@@ -379,23 +379,27 @@ function parseCsv(text) {
 }
 
 async function listSites() {
+  // Load from sites.json — source of truth for all sites
+  const res = await fetch(RAW('sites.json'), { cache: 'no-store' });
+  if (res.ok) {
+    const sites = await res.json();
+    return sites; // array of {code, name, domain}
+  }
+  // Fallback: scan repo for CSVs
   const c = getCfg();
-  const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/`, {
-    headers: ghHeaders(),
-  });
-  if (!res.ok) return [];
-  const files = await res.json();
+  const r2 = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/`, { headers: ghHeaders() });
+  if (!r2.ok) return [];
+  const files = await r2.json();
   return files
     .filter(f => f.name.startsWith('Calendrier Ninjalinking - ') && f.name.endsWith('.csv'))
-    .map(f => f.name.replace('Calendrier Ninjalinking - ', '').replace('.csv', ''))
-    .sort();
+    .map(f => ({ code: f.name.replace('Calendrier Ninjalinking - ', '').replace('.csv', ''), name: f.name.replace('Calendrier Ninjalinking - ', '').replace('.csv', ''), domain: '' }));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════════════════════
-let SITES = [];
-let currentSite    = '';
+let SITES = [];        // array of {code, name, domain}
+let currentSite    = ''; // current site code
 let currentTab     = 'forums';
 let currentWeek    = 1;
 let trueCurrentWeek = 1;
@@ -509,7 +513,7 @@ async function bootApp() {
       document.getElementById('cfg-error').classList.remove('hidden');
       return;
     }
-    currentSite = SITES[0];
+    currentSite = SITES[0].code;
     renderSiteTabs();
     document.getElementById('app').classList.remove('hidden');
     document.getElementById('app').classList.add('flex');
@@ -531,24 +535,29 @@ function setLoading(on, msg = 'Chargement…') {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SITE SELECTION
 // ═══════════════════════════════════════════════════════════════════════════════
+function getSiteInfo(code) {
+  return SITES.find(s => s.code === code) || { code, name: code, domain: '' };
+}
+
 function renderSiteTabs() {
   document.getElementById('site-tabs').innerHTML = SITES.map(s => `
-    <button onclick="selectSite('${s}')" id="tab-${s}"
+    <button onclick="selectSite('${s.code}')" id="tab-${s.code}"
             class="w-full text-left px-3 py-1.5 rounded-lg text-sm mb-0.5 transition-all font-medium
-                   ${s === currentSite ? 'bg-brand-50 text-brand-600' : 'text-gray-600 hover:bg-gray-50'}">
-      ${s}
+                   ${s.code === currentSite ? 'bg-brand-50 text-brand-600' : 'text-gray-600 hover:bg-gray-50'}">
+      <span class="block leading-tight">${s.name}</span>
+      ${s.domain ? `<span class="text-[10px] text-gray-400 font-normal">${s.domain}</span>` : ''}
     </button>`).join('');
 }
 
-async function selectSite(site) {
-  if (site === currentSite) return;
-  currentSite = site;
+async function selectSite(code) {
+  if (code === currentSite) return;
+  currentSite = code;
   SITES.forEach(s => {
-    const btn = document.getElementById(`tab-${s}`);
+    const btn = document.getElementById(`tab-${s.code}`);
     if (btn) btn.className = `w-full text-left px-3 py-1.5 rounded-lg text-sm mb-0.5 transition-all font-medium ${
-      s === site ? 'bg-brand-50 text-brand-600' : 'text-gray-600 hover:bg-gray-50'}`;
+      s.code === code ? 'bg-brand-50 text-brand-600' : 'text-gray-600 hover:bg-gray-50'}`;
   });
-  await loadSite(site);
+  await loadSite(code);
 }
 
 async function loadSite(site) {
@@ -610,6 +619,7 @@ async function loadSite(site) {
   // Forum: compute current week
   trueCurrentWeek = computeCurrentWeek(allForumsCsv);
   currentWeek     = trueCurrentWeek;
+  const info = getSiteInfo(site);
   document.getElementById('current-week-label').textContent = `S. courante : ${trueCurrentWeek}`;
 
   // Build weeks summary
@@ -727,7 +737,7 @@ function switchTab(tab) {
     renderWeekList();
     renderForums();
     checkEdits();
-    document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${currentSite}`;
+    document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${getSiteInfo(currentSite).name}`;
     document.getElementById('week-periode').textContent = getPeriode();
   } else if (tab === 'stacking') {
     document.getElementById('view-stacking').classList.remove('hidden');
@@ -766,7 +776,7 @@ function changeWeek(delta) {
   buildForumsForWeek();
   renderForums();
   renderWeekList();
-  document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${currentSite}`;
+  document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${getSiteInfo(currentSite).name}`;
   document.getElementById('week-periode').textContent = getPeriode();
   highlightWeekInList(currentWeek);
 }
@@ -777,7 +787,7 @@ function goCurrentWeek() {
   buildForumsForWeek();
   renderForums();
   highlightWeekInList(currentWeek);
-  document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${currentSite}`;
+  document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${getSiteInfo(currentSite).name}`;
   document.getElementById('week-periode').textContent = getPeriode();
 }
 
@@ -787,7 +797,7 @@ function selectWeek(num) {
   buildForumsForWeek();
   renderForums();
   highlightWeekInList(num);
-  document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${currentSite}`;
+  document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${getSiteInfo(currentSite).name}`;
   document.getElementById('week-periode').textContent = getPeriode();
 }
 
@@ -1034,7 +1044,7 @@ function toggleView(view) {
   if (view === 'overview') {
     weekEl.classList.add('hidden'); overEl.classList.remove('hidden');
     nav.classList.add('hidden');
-    document.getElementById('view-title').textContent  = `Vue globale — ${currentSite}`;
+    document.getElementById('view-title').textContent  = `Vue globale — ${getSiteInfo(currentSite).name}`;
     document.getElementById('week-periode').textContent = '';
     btn.textContent = 'Vue semaine'; btn.onclick = () => toggleView('week');
     renderOverview();
@@ -1042,7 +1052,7 @@ function toggleView(view) {
     overEl.classList.add('hidden'); weekEl.classList.remove('hidden');
     nav.classList.remove('hidden');
     btn.textContent = 'Vue globale'; btn.onclick = () => toggleView('overview');
-    document.getElementById('view-title').textContent  = `Semaine ${currentWeek} — ${currentSite}`;
+    document.getElementById('view-title').textContent  = `Semaine ${currentWeek} — ${getSiteInfo(currentSite).name}`;
     document.getElementById('week-periode').textContent = getPeriode();
   }
 }
@@ -1117,7 +1127,7 @@ function selectStackingWeek(idx) {
 function renderStacking() {
   const w = stackingData[currentStackingWeekIdx];
   if (!w) return;
-  document.getElementById('view-title').textContent  = `${w.semaine} — Link Stacking — ${currentSite}`;
+  document.getElementById('view-title').textContent  = `${w.semaine} — Link Stacking — ${getSiteInfo(currentSite).name}`;
   document.getElementById('week-periode').textContent = `${w.done}/${w.total} plateformes complétées`;
   const DF = { oui:'bg-green-50 text-green-700 border border-green-200', non:'bg-gray-50 text-gray-500 border border-gray-200', partiel:'bg-yellow-50 text-yellow-700 border border-yellow-200' };
   const DI = { immediat:'bg-blue-50 text-blue-600', facile:'bg-indigo-50 text-indigo-600', modere:'bg-orange-50 text-orange-600' };
@@ -1275,7 +1285,7 @@ function loadBlogs() {
     container.innerHTML = '<p class="text-[11px] text-gray-400 px-2">Aucune donnée</p>';
     document.getElementById('blogs-empty').classList.remove('hidden');
     document.getElementById('blogs-container').innerHTML = '';
-    document.getElementById('view-title').textContent  = `Blogs Sponsorisés — ${currentSite}`;
+    document.getElementById('view-title').textContent  = `Blogs Sponsorisés — ${getSiteInfo(currentSite).name}`;
     document.getElementById('week-periode').textContent = '';
     return;
   }
@@ -1309,7 +1319,7 @@ function selectBlogsWeek(idx) {
 
 function renderBlogsWeek() {
   const w = blogsData[currentBlogsWeekIdx]; if (!w) return;
-  document.getElementById('view-title').textContent  = `${w.semaine} — Blogs Sponsorisés — ${currentSite}`;
+  document.getElementById('view-title').textContent  = `${w.semaine} — Blogs Sponsorisés — ${getSiteInfo(currentSite).name}`;
   document.getElementById('week-periode').textContent = `${w.blogs.length} lien${w.blogs.length>1?'s':''}`;
 
   document.getElementById('blogs-container').innerHTML = w.blogs.map((b, bi) => {
@@ -1396,7 +1406,7 @@ function showUrlsView() {
   ['view-week','view-overview','view-stacking','view-blogs'].forEach(id =>
     document.getElementById(id).classList.add('hidden'));
   document.getElementById('view-urls').classList.remove('hidden');
-  document.getElementById('view-title').textContent  = `URLs postées — ${currentSite}`;
+  document.getElementById('view-title').textContent  = `URLs postées — ${getSiteInfo(currentSite).name}`;
   document.getElementById('week-periode').textContent = '';
   document.getElementById('week-nav').classList.add('hidden');
   document.getElementById('btn-overview').classList.add('hidden');

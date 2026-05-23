@@ -1,0 +1,9 @@
+[
+  { "code": "GA",  "name": "Le Garage",        "domain": "garageraymond.fr" },
+  { "code": "XGA", "name": "Puissance Garage",  "domain": "puissancedgarage.fr" },
+  { "code": "CMV", "name": "CemaRenov",         "domain": "cemarenov.fr" },
+  { "code": "CT",  "name": "CT Auch",           "domain": "controle-technique-auch.fr" },
+  { "code": "B34", "name": "BM Auto 34",        "domain": "bmauto34.com" },
+  { "code": "BSA", "name": "IDF Auto Ecole",    "domain": "idfautoecole.fr" },
+  { "code": "GS",  "name": "Garage Salengro",   "domain": "garage-salengro.com" }
+]
