@@ -1,0 +1,92 @@
+{
+  "cbf600.fr": {
+    "status": "link_poste",
+    "url_override": "https://cbf600.fr/viewtopic.php?f=25&t=30564&p=679013#p679013",
+    "post_date": "2026-05-04",
+    "post_url": "https://cbf600.fr/viewtopic.php?f=25&t=30564&p=679013#p679013",
+    "edit_date": "2026-05-11"
+  },
+  "rallye-game.fr": {
+    "status": "link_poste",
+    "post_date": "2026-04-19",
+    "post_url": "https://rallye-game.fr/forum/viewtopic.php?p=90555#p90555",
+    "edit_date": "2026-04-26",
+    "url_override": "https://rallye-game.fr/forum/viewtopic.php?p=90555#p90555"
+  },
+  "500rgas.info": {
+    "status": "link_poste",
+    "url_override": "https://500rgas.info/forum/viewtopic.php?p=140790#p140790",
+    "post_date": "2026-04-27",
+    "post_url": "https://500rgas.info/forum/viewtopic.php?p=140790#p140790",
+    "edit_date": "2026-05-04"
+  },
+  "binano.fr": {
+    "status": "banned",
+    "post_date": "2026-04-19",
+    "post_url": "",
+    "edit_date": "2026-04-26",
+    "url_override": "https://www.binano.fr/viewtopic.php?t=41515"
+  },
+  "gladius.fr": {
+    "status": "link_poste",
+    "post_date": "2026-04-19",
+    "post_url": "",
+    "edit_date": "2026-04-26"
+  },
+  "andlil.com": {
+    "status": "message_poste",
+    "post_date": "2026-04-27",
+    "post_url": "",
+    "edit_date": "2026-05-04",
+    "url_override": "https://www.andlil.com/forum/viewtopic.php?f=66&t=47674&start=0",
+    "notes": "modo valide wait\n"
+  },
+  "autohacking.net": {
+    "url_override": "https://www.motorcarsoft.com/viewtopic.php?f=167&t=842&p=179127#p179127",
+    "status": "link_poste",
+    "post_date": "2026-05-02",
+    "post_url": "",
+    "edit_date": "2026-05-09"
+  },
+  "brassageamateur.com": {
+    "url_override": "https://www.brassageamateur.com/forum/viewtopic.php?p=528611&p=528611",
+    "status": "banned",
+    "post_date": "2026-04-27",
+    "post_url": "",
+    "edit_date": "2026-05-04",
+    "notes": "https://forum-auto.matmut.fr/forum/DACIA/DACIA-DUSTER/AVIS-DACIA-DUSTER-3--2024-/5190102/188999 chec aussi link\n"
+  },
+  "campingcaraide.fr": {
+    "url_override": "https://www.campingcaraide.fr/viewtopic.php?p=187966#p187966",
+    "status": "link_poste",
+    "post_date": "2026-04-27",
+    "post_url": "",
+    "edit_date": "2026-05-04",
+    "notes": "peut pas poster car connard repondent"
+  },
+  "diagrepaauto.fr": {
+    "status": "attente_modo"
+  },
+  "forum-levoyageur.fr": {
+    "status": "banned"
+  },
+  "forumcbr125.com": {
+    "status": "link_poste",
+    "post_date": "2026-05-04",
+    "post_url": "",
+    "edit_date": "2026-05-11",
+    "url_override": "https://forumcbr125.com/viewtopic.php?f=2&t=5090"
+  },
+  "hondacx.com": {
+    "status": "attente_modo"
+  },
+  "lestracteursrouges.com": {
+    "status": "attente_modo"
+  },
+  "techniarabia.com": {
+    "notes": "inscription done"
+  },
+  "trafic-amenage.com": {
+    "notes": "inscription done"
+  }
+}

@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NinjaLinking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { brand: { 50:'#f0f4ff',100:'#e0e9ff',500:'#4f6ef7',600:'#3a56e8',700:'#2f46c9' } } } }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .fade-in { animation: fadeIn .15s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
+    .status-dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; }
+    .week-item:hover { background:#f7f8fc; }
+    .week-item.active { background:#f0f4ff; }
+    textarea:focus { outline:none; box-shadow:none; }
+    .progress-bar { transition: width .4s ease; }
+    .tab-btn { border-bottom: 2px solid transparent; }
+    .tab-btn.active { border-bottom-color: #3a56e8; color: #3a56e8; }
+  </style>
+</head>
+<body class="bg-[#f7f8fc] min-h-screen text-gray-800">
+
+<!-- ── SETUP SCREEN ──────────────────────────────────────────────────────────── -->
+<div id="setup-screen" class="hidden fixed inset-0 bg-[#f7f8fc] z-50 flex items-center justify-center p-6">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+    <h1 class="text-base font-bold text-gray-800 mb-1">NinjaLinking</h1>
+    <p class="text-sm text-gray-400 mb-6">Configuration initiale — saisie une seule fois</p>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5">Nom d'utilisateur GitHub</label>
+        <input id="cfg-owner" type="text" placeholder="ex: ovzzz1"
+               class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5">Nom du repo</label>
+        <input id="cfg-repo" type="text" placeholder="ex: ninjalinking"
+               class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5">
+          Personal Access Token GitHub
+          <a href="https://github.com/settings/tokens/new?scopes=repo&description=NinjaLinking" target="_blank"
+             class="ml-1 text-brand-500 hover:underline font-normal">Créer un token →</a>
+        </label>
+        <input id="cfg-token" type="password" placeholder="ghp_xxxxxxxxxxxx"
+               class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <p class="text-[11px] text-gray-400 mt-1">Sauvegardé uniquement dans ton navigateur, jamais envoyé ailleurs que GitHub.</p>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5">Branche du repo</label>
+        <input id="cfg-branch" type="text" placeholder="main" value="main"
+               class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+    </div>
+
+    <button onclick="saveConfig()"
+            class="mt-6 w-full bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors">
+      Lancer le dashboard
+    </button>
+    <p id="cfg-error" class="hidden mt-3 text-xs text-red-500 text-center"></p>
+  </div>
+</div>
+
+<!-- ── LOADING ────────────────────────────────────────────────────────────────── -->
+<div id="loading-screen" class="hidden fixed inset-0 bg-[#f7f8fc] z-40 flex items-center justify-center">
+  <div class="text-center">
+    <div class="w-8 h-8 border-2 border-brand-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-3"></div>
+    <p class="text-sm text-gray-400" id="loading-msg">Chargement…</p>
+  </div>
+</div>
+
+<!-- ── MAIN APP ────────────────────────────────────────────────────────────────── -->
+<div id="app" class="hidden flex h-screen overflow-hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="w-56 bg-white border-r border-gray-100 flex flex-col shrink-0 overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 shrink-0 flex items-center justify-between">
+      <p class="text-xs font-bold text-gray-800 tracking-widest uppercase">NinjaLinking</p>
+      <button onclick="showSetup()" title="Paramètres" class="text-gray-300 hover:text-gray-500 transition-colors text-lg leading-none">⚙</button>
+    </div>
+
+    <div class="px-3 pt-4 shrink-0">
+      <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-2 mb-1.5">Sites</p>
+      <div id="site-tabs"></div>
+    </div>
+
+    <div class="mx-5 mt-4 mb-3 border-t border-gray-100 shrink-0"></div>
+
+    <div class="px-3 shrink-0 mb-1">
+      <div class="flex items-center justify-between px-2 mb-1.5">
+        <p id="sidebar-week-label" class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Semaines</p>
+        <button onclick="toggleView('overview')" id="btn-overview"
+                class="text-[10px] text-gray-400 hover:text-brand-600 transition-colors font-medium">
+          Vue globale
+        </button>
+      </div>
+    </div>
+    <div id="week-list" class="flex-1 overflow-y-auto px-3 pb-4 space-y-0.5"></div>
+
+    <div class="px-3 pb-3 shrink-0">
+      <button onclick="showUrlsView()"
+         class="block w-full text-left px-3 py-2 text-xs text-gray-500 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100">
+        Voir toutes les URLs &rarr;
+      </button>
+    </div>
+    <div class="px-5 py-3 border-t border-gray-100 shrink-0">
+      <p id="current-week-label" class="text-[11px] text-gray-400"></p>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-100 px-8 py-3 flex items-center justify-between shrink-0">
+      <div>
+        <h1 id="view-title" class="text-sm font-semibold text-gray-800"></h1>
+        <p id="week-periode" class="text-xs text-gray-400 mt-0.5"></p>
+      </div>
+      <div id="week-nav" class="flex items-center gap-2">
+        <button onclick="changeWeek(-1)"
+                class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors">
+          &larr; Préc.
+        </button>
+        <button onclick="goCurrentWeek()"
+                class="px-3 py-1.5 text-xs bg-brand-50 text-brand-600 rounded-lg hover:bg-brand-100 transition-colors font-medium border border-brand-100">
+          Aujourd'hui
+        </button>
+        <button onclick="changeWeek(1)"
+                class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors">
+          Suiv. &rarr;
+        </button>
+      </div>
+    </header>
+
+    <!-- TAB BAR -->
+    <div class="bg-white border-b border-gray-100 px-8 flex gap-6 shrink-0">
+      <button onclick="switchTab('forums')" id="tabbar-forums"
+              class="tab-btn active text-xs font-semibold py-3 text-brand-600 transition-colors">Forums</button>
+      <button onclick="switchTab('stacking')" id="tabbar-stacking"
+              class="tab-btn text-xs font-semibold py-3 text-gray-400 hover:text-gray-600 transition-colors">Link Stacking</button>
+      <button onclick="switchTab('blogs')" id="tabbar-blogs"
+              class="tab-btn text-xs font-semibold py-3 text-gray-400 hover:text-gray-600 transition-colors">Blogs Sponsorisés</button>
+    </div>
+
+    <!-- J+7 banner -->
+    <div id="edits-banner" class="hidden bg-amber-50 border-b border-amber-100 px-8 py-3 shrink-0">
+      <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-2">Editions J+7 a effectuer</p>
+      <div id="edits-list" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- Majestic banner -->
+    <div id="majestic-banner" class="hidden bg-orange-50 border-b border-orange-100 px-8 py-3 shrink-0">
+      <p class="text-[10px] font-bold text-orange-600 uppercase tracking-wider mb-2">Verification Majestic J+14 requise</p>
+      <div id="majestic-list" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto px-8 py-6">
+
+      <!-- Forums -->
+      <div id="view-week">
+        <div id="forums-container" class="space-y-2.5"></div>
+        <div id="empty-state" class="hidden text-center py-24">
+          <p class="text-sm text-gray-400">Aucun forum actif pour cette semaine.</p>
+        </div>
+      </div>
+      <div id="view-overview" class="hidden">
+        <div id="overview-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- Stacking -->
+      <div id="view-stacking" class="hidden">
+        <div id="stacking-container"></div>
+      </div>
+
+      <!-- Blogs -->
+      <div id="view-blogs" class="hidden">
+        <div id="blogs-container" class="space-y-2.5"></div>
+        <div id="blogs-empty" class="hidden text-center py-24">
+          <p class="text-sm text-gray-400">Aucun blog sponsorisé pour ce site.</p>
+        </div>
+      </div>
+
+      <!-- URLs view -->
+      <div id="view-urls" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <button onclick="hideUrlsView()" class="text-xs text-gray-400 hover:text-gray-700 transition-colors">&larr; Retour</button>
+          <div class="flex items-center gap-3">
+            <select id="url-filter" onchange="renderUrlsView()"
+                    class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none bg-white text-gray-600">
+              <option value="">Tous les statuts</option>
+              <option value="attente_email">Attente email</option>
+              <option value="attente_modo">Attente modo</option>
+              <option value="message_poste">Message posté</option>
+              <option value="link_poste">Link posté</option>
+              <option value="banned">Banned</option>
+            </select>
+            <button onclick="exportUrlsCsv()"
+                    class="px-4 py-1.5 text-xs bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors">
+              Exporter CSV
+            </button>
+            <button onclick="copyVisibleUrls()"
+                    class="px-4 py-1.5 text-xs border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-lg font-medium transition-colors">
+              Copier les URLs
+            </button>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-100 text-left">
+                <th class="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider w-10">#</th>
+                <th class="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Domaine</th>
+                <th class="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider w-24">Semaine</th>
+                <th class="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">URL du post</th>
+                <th class="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider w-36">Statut</th>
+                <th class="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider w-28">Date post</th>
+                <th class="px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider w-28">J+7</th>
+              </tr>
+            </thead>
+            <tbody id="urls-tbody"></tbody>
+          </table>
+          <div id="urls-empty-msg" class="hidden text-center py-16">
+            <p class="text-sm text-gray-400">Aucune URL enregistrée.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── MODALS ──────────────────────────────────────────────────────────────────── -->
+
+<!-- Message modal -->
+<div id="modal-message" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-xl">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <p class="font-semibold text-sm text-gray-800" id="modal-domain"></p>
+      <button onclick="closeModal('modal-message')" class="text-gray-300 hover:text-gray-500 text-xl leading-none">&times;</button>
+    </div>
+    <div class="px-6 py-4 max-h-64 overflow-y-auto">
+      <p id="modal-text" class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed"></p>
+    </div>
+    <div class="flex gap-2 px-6 py-4 border-t border-gray-100">
+      <button onclick="copyMessage()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-xs font-medium transition-colors">Copier le message</button>
+      <button onclick="copyAndOpen()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-2 rounded-lg text-xs font-medium transition-colors">Copier + Ouvrir le forum</button>
+      <button onclick="closeModal('modal-message')" class="px-4 py-2 border border-gray-100 rounded-lg text-xs text-gray-400 hover:bg-gray-50 transition-colors">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Posted modal -->
+<div id="modal-posted" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <p class="font-semibold text-sm text-gray-800">Marquer comme posté</p>
+      <p class="text-xs text-gray-400 mt-0.5" id="modal-posted-domain"></p>
+    </div>
+    <div class="px-6 py-4 space-y-3">
+      <label class="block text-xs font-medium text-gray-500 mb-1">URL du post <span class="text-gray-300">(pour l'édition J+7)</span></label>
+      <input id="post-url-input" type="url" placeholder="https://forum.com/viewtopic.php?p=..."
+             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      <p class="text-xs text-gray-400">Une édition J+7 sera planifiée dans 7 jours.</p>
+    </div>
+    <div class="flex gap-2 px-6 py-4 border-t border-gray-100">
+      <button onclick="confirmPosted()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-xs font-medium transition-colors">Confirmer</button>
+      <button onclick="closeModal('modal-posted')" class="px-4 py-2 border border-gray-200 rounded-lg text-xs text-gray-500 hover:bg-gray-50 transition-colors">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stacking done modal -->
+<div id="modal-stacking" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <p class="font-semibold text-sm text-gray-800">Marquer comme fait</p>
+      <p class="text-xs text-gray-400 mt-0.5" id="modal-stacking-name"></p>
+    </div>
+    <div class="px-6 py-4">
+      <label class="block text-xs font-medium text-gray-500 mb-1">URL du profil créé <span class="text-gray-300">(optionnel)</span></label>
+      <input id="stacking-url-input" type="url" placeholder="https://crunchbase.com/organization/..."
+             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+    </div>
+    <div class="flex gap-2 px-6 py-4 border-t border-gray-100">
+      <button onclick="confirmStacking()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-xs font-medium transition-colors">Confirmer</button>
+      <button onclick="closeModal('modal-stacking')" class="px-4 py-2 border border-gray-200 rounded-lg text-xs text-gray-500 hover:bg-gray-50 transition-colors">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="hidden fixed bottom-6 right-6 bg-gray-900 text-white px-4 py-2.5 rounded-lg text-xs shadow-xl z-50"></div>
+
+<!-- ── SCRIPT ──────────────────────────────────────────────────────────────────── -->
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIG & GITHUB API
+// ═══════════════════════════════════════════════════════════════════════════════
+const CFG_KEY = 'ninjalinking_v1';
+
+function getCfg() {
+  try { return JSON.parse(localStorage.getItem(CFG_KEY)) || {}; }
+  catch { return {}; }
+}
+function setCfg(c) { localStorage.setItem(CFG_KEY, JSON.stringify(c)); }
+
+function ghHeaders() {
+  return {
+    'Authorization': `token ${getCfg().token}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json',
+  };
+}
+
+const RAW = (path) => {
+  const c = getCfg();
+  return `https://raw.githubusercontent.com/${c.owner}/${c.repo}/${c.branch || 'main'}/${encodeURIComponent(path).replace(/%2F/g,'/')}`;
+};
+const API = (path) => {
+  const c = getCfg();
+  return `https://api.github.com/repos/${c.owner}/${c.repo}/contents/${encodeURIComponent(path).replace(/%2F/g,'/')}`;
+};
+
+// SHA cache to avoid double-fetching
+const shaCache = {};
+
+async function ghRead(path) {
+  const res = await fetch(RAW(path), { cache: 'no-store' });
+  if (!res.ok) return {};
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch { return {}; }
+}
+
+async function ghWrite(path, data) {
+  // Fetch current SHA
+  let sha = shaCache[path];
+  if (!sha) {
+    const res = await fetch(API(path), { headers: ghHeaders() });
+    if (res.ok) { const f = await res.json(); sha = f.sha; }
+  }
+
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+  const body = { message: `update ${path}`, content, branch: getCfg().branch || 'main' };
+  if (sha) body.sha = sha;
+
+  const res = await fetch(API(path), {
+    method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body),
+  });
+  if (res.ok) {
+    const f = await res.json();
+    shaCache[path] = f.content?.sha;
+  }
+  return res.ok;
+}
+
+async function fetchRawCsv(filename) {
+  const res = await fetch(RAW(filename), { cache: 'no-store' });
+  if (!res.ok) return null;
+  return await res.text();
+}
+
+function parseCsv(text) {
+  if (!text) return [];
+  const result = Papa.parse(text, {
+    header: true, skipEmptyLines: true,
+    comments: '#', transformHeader: h => h.trim(),
+  });
+  return result.data;
+}
+
+async function listSites() {
+  const c = getCfg();
+  const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/`, {
+    headers: ghHeaders(),
+  });
+  if (!res.ok) return [];
+  const files = await res.json();
+  return files
+    .filter(f => f.name.startsWith('Calendrier Ninjalinking - ') && f.name.endsWith('.csv'))
+    .map(f => f.name.replace('Calendrier Ninjalinking - ', '').replace('.csv', ''))
+    .sort();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+let SITES = [];
+let currentSite    = '';
+let currentTab     = 'forums';
+let currentWeek    = 1;
+let trueCurrentWeek = 1;
+let totalWeeks     = 1;
+let forumsData     = [];    // array of forum objects for current week
+let allWeeksData   = [];    // array of week summary objects
+let allForumsCsv   = [];    // raw CSV rows
+let forumStatus    = {};    // current site forum status JSON
+let forumStatusPath = '';
+
+let stackingData   = [];
+let stackingStatus = {};
+let stackingStatusPath = '';
+let currentStackingWeekIdx = 0;
+
+let blogsData       = [];
+let blogsStatus     = {};
+let blogsStatusPath = '';
+let currentBlogsWeekIdx = 0;
+let allBlogsCsv     = [];
+
+let pendingPostedDomain  = null;
+let pendingStackingName  = null;
+let currentMessage  = '';
+let currentForumUrl = '';
+let notesTimers     = {};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATUS HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+const STATUS_DEFAULT = { label: '—', dot: 'bg-gray-200', badge: 'text-gray-400 bg-gray-50' };
+const STATUS = {
+  '':             STATUS_DEFAULT,
+  attente_email:  { label: 'Attente email',  dot: 'bg-amber-400',  badge: 'text-amber-700 bg-amber-50'   },
+  attente_modo:   { label: 'Attente modo',   dot: 'bg-orange-400', badge: 'text-orange-700 bg-orange-50' },
+  message_poste:  { label: 'Message posté',  dot: 'bg-blue-400',   badge: 'text-blue-700 bg-blue-50'     },
+  link_poste:     { label: 'Link posté',     dot: 'bg-green-500',  badge: 'text-green-700 bg-green-50'   },
+  banned:         { label: 'Banned',         dot: 'bg-red-400',    badge: 'text-red-700 bg-red-50'       },
+};
+const STATUS_OPTIONS = [
+  { value: '',              label: '— Aucun statut' },
+  { value: 'attente_email', label: 'Attente email'  },
+  { value: 'attente_modo',  label: 'Attente modo'   },
+  { value: 'message_poste', label: 'Message posté'  },
+  { value: 'link_poste',    label: 'Link posté'     },
+  { value: 'banned',        label: 'Banned'         },
+];
+function getStatus(k) { return STATUS[k || ''] || STATUS_DEFAULT; }
+
+const BLOG_STATUS_LABELS = {
+  planifie:         { label: 'Planifié',        badge: 'text-gray-600 bg-gray-100'    },
+  commande:         { label: 'Commandé',         badge: 'text-blue-700 bg-blue-50'     },
+  en_ligne:         { label: 'En ligne',         badge: 'text-green-700 bg-green-50'   },
+  verifie_majestic: { label: 'Vérifié Majestic', badge: 'text-purple-700 bg-purple-50' },
+};
+const BLOG_STATUSES = ['planifie','commande','en_ligne','verifie_majestic'];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SETUP / CONFIG
+// ═══════════════════════════════════════════════════════════════════════════════
+function showSetup() {
+  const c = getCfg();
+  document.getElementById('cfg-owner').value  = c.owner  || '';
+  document.getElementById('cfg-repo').value   = c.repo   || '';
+  document.getElementById('cfg-token').value  = c.token  || '';
+  document.getElementById('cfg-branch').value = c.branch || 'main';
+  document.getElementById('cfg-error').classList.add('hidden');
+  document.getElementById('setup-screen').classList.remove('hidden');
+}
+
+async function saveConfig() {
+  const owner  = document.getElementById('cfg-owner').value.trim();
+  const repo   = document.getElementById('cfg-repo').value.trim();
+  const token  = document.getElementById('cfg-token').value.trim();
+  const branch = document.getElementById('cfg-branch').value.trim() || 'main';
+  const errEl  = document.getElementById('cfg-error');
+
+  if (!owner || !repo || !token) {
+    errEl.textContent = 'Tous les champs sont requis.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  setCfg({ owner, repo, token, branch });
+
+  // Test connection
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+    headers: { Authorization: `token ${token}` }
+  });
+  if (!res.ok) {
+    errEl.textContent = 'Impossible d\'accéder au repo. Vérifie le token et le nom du repo.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  document.getElementById('setup-screen').classList.add('hidden');
+  await bootApp();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════════════════════
+async function bootApp() {
+  setLoading(true, 'Connexion au repo…');
+  try {
+    SITES = await listSites();
+    if (!SITES.length) {
+      setLoading(false);
+      showSetup();
+      document.getElementById('cfg-error').textContent = 'Aucun CSV Calendrier Ninjalinking trouvé dans le repo.';
+      document.getElementById('cfg-error').classList.remove('hidden');
+      return;
+    }
+    currentSite = SITES[0];
+    renderSiteTabs();
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('app').classList.add('flex');
+    setLoading(false);
+    await loadSite(currentSite);
+  } catch(e) {
+    setLoading(false);
+    showSetup();
+    document.getElementById('cfg-error').textContent = 'Erreur : ' + e.message;
+    document.getElementById('cfg-error').classList.remove('hidden');
+  }
+}
+
+function setLoading(on, msg = 'Chargement…') {
+  document.getElementById('loading-screen').classList.toggle('hidden', !on);
+  document.getElementById('loading-msg').textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SITE SELECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderSiteTabs() {
+  document.getElementById('site-tabs').innerHTML = SITES.map(s => `
+    <button onclick="selectSite('${s}')" id="tab-${s}"
+            class="w-full text-left px-3 py-1.5 rounded-lg text-sm mb-0.5 transition-all font-medium
+                   ${s === currentSite ? 'bg-brand-50 text-brand-600' : 'text-gray-600 hover:bg-gray-50'}">
+      ${s}
+    </button>`).join('');
+}
+
+async function selectSite(site) {
+  if (site === currentSite) return;
+  currentSite = site;
+  SITES.forEach(s => {
+    const btn = document.getElementById(`tab-${s}`);
+    if (btn) btn.className = `w-full text-left px-3 py-1.5 rounded-lg text-sm mb-0.5 transition-all font-medium ${
+      s === site ? 'bg-brand-50 text-brand-600' : 'text-gray-600 hover:bg-gray-50'}`;
+  });
+  await loadSite(site);
+}
+
+async function loadSite(site) {
+  setLoading(true, `Chargement ${site}…`);
+  // Reset
+  forumStatus    = {};  stackingStatus = {};  blogsStatus = {};
+  allForumsCsv   = [];  allBlogsCsv   = [];
+  forumsData     = [];  stackingData  = [];  blogsData   = [];
+
+  forumStatusPath    = `status/${site}.json`;
+  stackingStatusPath = `status/${site}-stacking.json`;
+  blogsStatusPath    = `status/${site}-blogs.json`;
+
+  // Load in parallel
+  const [csvText, fStatus, sStatus, bStatus, stackCsvText, blogsCsvText] = await Promise.all([
+    fetchRawCsv(`Calendrier Ninjalinking - ${site}.csv`),
+    ghRead(forumStatusPath),
+    ghRead(stackingStatusPath),
+    ghRead(blogsStatusPath),
+    fetchRawCsv('link-stacking-master.csv'),
+    fetchRawCsv(`Blogs Sponsorisés - ${site}.csv`),
+  ]);
+
+  allForumsCsv   = parseCsv(csvText);
+  forumStatus    = fStatus;
+  stackingStatus = sStatus;
+  blogsStatus    = bStatus;
+  allBlogsCsv    = parseCsv(blogsCsvText);
+
+  // Stacking CSV (common)
+  const stackRows = parseCsv(stackCsvText);
+  // Build stacking weeks
+  const stackWeeksMap = {};
+  stackRows.forEach(row => {
+    const sem = (row.semaine || '').trim();
+    if (!stackWeeksMap[sem]) stackWeeksMap[sem] = [];
+    stackWeeksMap[sem].push(row);
+  });
+  stackingData = Object.entries(stackWeeksMap).map(([sem, platforms]) => {
+    const ps = platforms.map(p => {
+      const name = (p.plateforme || '').trim();
+      const s = stackingStatus[name] || {};
+      return {
+        plateforme: name,
+        url:        (p.url_inscription || '').trim(),
+        dofollow:   (p.dofollow || '').trim(),
+        difficulte: (p.difficulte || '').trim(),
+        type:       (p.type || '').trim(),
+        notes:      (p.notes || '').trim(),
+        status:     s.status || 'todo',
+        url_profil: s.url_profil || '',
+        date:       s.date || '',
+      };
+    });
+    const done = ps.filter(p => p.status === 'done').length;
+    return { semaine: sem, platforms: ps, total: ps.length, done };
+  });
+
+  // Forum: compute current week
+  trueCurrentWeek = computeCurrentWeek(allForumsCsv);
+  currentWeek     = trueCurrentWeek;
+  document.getElementById('current-week-label').textContent = `S. courante : ${trueCurrentWeek}`;
+
+  // Build weeks summary
+  buildAllWeeksSummary();
+
+  setLoading(false);
+
+  if (currentTab === 'forums') {
+    buildForumsForWeek();
+    renderWeekList();
+    renderForums();
+    checkEdits();
+  } else if (currentTab === 'stacking') {
+    loadStacking();
+  } else {
+    loadBlogs();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FORUM DATA HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+function computeCurrentWeek(rows) {
+  const today = new Date();
+  const seen  = new Set();
+  for (const row of rows) {
+    const sem = (row.semaine || '').trim();
+    if (seen.has(sem)) continue; seen.add(sem);
+    try {
+      const parts = (row.periode || '').split(' - ');
+      const [d, m, y] = parts[0].trim().split('/');
+      const start = new Date(+y, +m - 1, +d);
+      const end   = new Date(start); end.setDate(end.getDate() + 6);
+      if (today >= start && today <= end) {
+        return parseInt(sem.replace('Semaine ', '')) || 1;
+      }
+    } catch {}
+  }
+  return 1;
+}
+
+function buildAllWeeksSummary() {
+  const weekMap = {};
+  allForumsCsv.forEach(row => {
+    const sem = (row.semaine || '').trim();
+    const activite = (row.activite || '').trim();
+    if (!sem || activite !== 'active') return;
+    if (!weekMap[sem]) weekMap[sem] = { sem, periode: (row.periode||'').trim(), total: 0, done: 0 };
+    weekMap[sem].total++;
+    const domain = (row.domaine || '').trim();
+    const st = (forumStatus[domain] || {}).status || '';
+    if (st === 'message_poste' || st === 'link_poste') weekMap[sem].done++;
+  });
+  allWeeksData = Object.values(weekMap).sort((a,b) => {
+    const na = parseInt(a.sem.replace('Semaine ','')) || 0;
+    const nb = parseInt(b.sem.replace('Semaine ','')) || 0;
+    return na - nb;
+  });
+  totalWeeks = allWeeksData.length;
+}
+
+function buildForumsForWeek() {
+  const label = `Semaine ${currentWeek}`;
+  const rows  = allForumsCsv.filter(r =>
+    (r.semaine || '').trim() === label && (r.activite || '').trim() === 'active'
+  );
+  forumsData = rows.map(row => {
+    const domain = (row.domaine || '').trim();
+    const s      = forumStatus[domain] || {};
+    return {
+      domain,
+      url:      s.url_override || (row.url_forum || '').trim(),
+      url_orig: (row.url_forum || '').trim(),
+      message:  (row.message   || '').trim(),
+      link:     (row.Link      || '').trim(),
+      ancre:    (row.ancre     || '').trim(),
+      score:    parseInt(row.score || 0),
+      status:   s.status   || '',
+      post_date:s.post_date || '',
+      post_url: s.post_url  || '',
+      edit_date:s.edit_date || '',
+      notes:    s.notes     || '',
+    };
+  });
+}
+
+function getPeriode() {
+  const label = `Semaine ${currentWeek}`;
+  const w = allWeeksData.find(w => w.sem === label);
+  return w ? w.periode : '';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════════════════════
+function switchTab(tab) {
+  currentTab = tab;
+  ['forums','stacking','blogs'].forEach(t => {
+    const btn = document.getElementById(`tabbar-${t}`);
+    btn.className = `tab-btn ${t === tab ? 'active text-brand-600' : 'text-gray-400 hover:text-gray-600'} text-xs font-semibold py-3 transition-colors`;
+  });
+  const nav = document.getElementById('week-nav');
+  const btnOv = document.getElementById('btn-overview');
+  nav.classList.toggle('hidden', tab !== 'forums');
+  btnOv.classList.toggle('hidden', tab !== 'forums');
+  document.getElementById('edits-banner').classList.add('hidden');
+  document.getElementById('majestic-banner').classList.add('hidden');
+  ['view-week','view-overview','view-stacking','view-blogs','view-urls'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
+
+  if (tab === 'forums') {
+    document.getElementById('view-week').classList.remove('hidden');
+    document.getElementById('sidebar-week-label').textContent = 'Semaines';
+    buildForumsForWeek();
+    renderWeekList();
+    renderForums();
+    checkEdits();
+    document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${currentSite}`;
+    document.getElementById('week-periode').textContent = getPeriode();
+  } else if (tab === 'stacking') {
+    document.getElementById('view-stacking').classList.remove('hidden');
+    document.getElementById('sidebar-week-label').textContent = 'Semaines';
+    loadStacking();
+  } else if (tab === 'blogs') {
+    document.getElementById('view-blogs').classList.remove('hidden');
+    document.getElementById('sidebar-week-label').textContent = 'Semaines';
+    loadBlogs();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FORUMS
+// ═══════════════════════════════════════════════════════════════════════════════
+function changeWeek(delta) {
+  if (currentTab === 'stacking') {
+    const n = currentStackingWeekIdx + delta;
+    if (n < 0 || n >= stackingData.length) return;
+    currentStackingWeekIdx = n;
+    renderStacking();
+    return;
+  }
+  if (currentTab === 'blogs') {
+    const n = currentBlogsWeekIdx + delta;
+    if (n < 0 || n >= blogsData.length) return;
+    currentBlogsWeekIdx = n;
+    renderBlogsWeek();
+    return;
+  }
+  const nums = allWeeksData.map(w => parseInt(w.sem.replace('Semaine ','')));
+  const idx = nums.indexOf(currentWeek);
+  const next = idx + delta;
+  if (next < 0 || next >= nums.length) return;
+  currentWeek = nums[next];
+  buildForumsForWeek();
+  renderForums();
+  renderWeekList();
+  document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${currentSite}`;
+  document.getElementById('week-periode').textContent = getPeriode();
+  highlightWeekInList(currentWeek);
+}
+
+function goCurrentWeek() {
+  if (currentTab !== 'forums') { switchTab('forums'); return; }
+  currentWeek = trueCurrentWeek;
+  buildForumsForWeek();
+  renderForums();
+  highlightWeekInList(currentWeek);
+  document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${currentSite}`;
+  document.getElementById('week-periode').textContent = getPeriode();
+}
+
+function selectWeek(num) {
+  if (currentTab !== 'forums') switchTab('forums');
+  currentWeek = num;
+  buildForumsForWeek();
+  renderForums();
+  highlightWeekInList(num);
+  document.getElementById('view-title').textContent = `Semaine ${currentWeek} — ${currentSite}`;
+  document.getElementById('week-periode').textContent = getPeriode();
+}
+
+function renderWeekList() {
+  document.getElementById('week-list').innerHTML = allWeeksData.map(w => {
+    const num = parseInt(w.sem.replace('Semaine ','')) || 0;
+    const pct = w.total > 0 ? Math.round((w.done / w.total) * 100) : 0;
+    const col = pct === 100 ? 'bg-green-400' : pct > 0 ? 'bg-brand-500' : 'bg-gray-200';
+    const isCur = num === currentWeek;
+    return `
+    <button onclick="selectWeek(${num})" id="week-item-${num}"
+            class="week-item w-full text-left px-2 py-2 rounded-lg transition-colors ${isCur ? 'active' : ''}">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs font-medium text-gray-700">S${num}</span>
+        <span class="text-[10px] text-gray-400">${w.done}/${w.total}</span>
+      </div>
+      <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
+        <div class="h-1 rounded-full progress-bar ${col}" style="width:${pct}%"></div>
+      </div>
+    </button>`;
+  }).join('');
+}
+
+function highlightWeekInList(num) {
+  document.querySelectorAll('.week-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById(`week-item-${num}`);
+  if (el) { el.classList.add('active'); el.scrollIntoView({ block:'nearest', behavior:'smooth' }); }
+}
+
+function checkEdits() {
+  const today = new Date().toISOString().slice(0,10);
+  const due = [];
+  Object.entries(forumStatus).forEach(([domain, s]) => {
+    if (s.status === 'message_poste' && s.edit_date && s.edit_date <= today) {
+      const row = allForumsCsv.find(r => (r.domaine||'').trim() === domain) || {};
+      due.push({ domain, post_url: s.post_url||'', edit_date: s.edit_date,
+                 link: (row.Link||'').trim(), ancre: (row.ancre||'').trim() });
+    }
+  });
+  const banner = document.getElementById('edits-banner');
+  const list   = document.getElementById('edits-list');
+  if (!due.length || currentTab !== 'forums') { banner.classList.add('hidden'); return; }
+  banner.classList.remove('hidden');
+  list.innerHTML = due.map(e => `
+    <div class="flex items-center gap-3 bg-white border border-amber-200 rounded-lg px-3 py-2 text-xs">
+      <span class="font-semibold text-gray-700">${e.domain}</span>
+      <span class="text-gray-400">due le ${e.edit_date}</span>
+      ${e.post_url ? `<a href="${e.post_url}" target="_blank" class="text-brand-600 hover:underline">Ouvrir le post</a>` : ''}
+      ${e.ancre || e.link ? `<span class="text-gray-400">Ancre : <strong>${e.ancre || e.link}</strong></span>` : ''}
+      <button onclick="forumAction('${e.domain}','set_status','link_poste')"
+              class="ml-auto bg-amber-100 hover:bg-amber-200 text-amber-800 px-2.5 py-1 rounded-md font-medium transition-colors">
+        Marquer link posté
+      </button>
+    </div>`).join('');
+}
+
+function renderForums() {
+  const container = document.getElementById('forums-container');
+  const empty     = document.getElementById('empty-state');
+  if (!forumsData.length) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  container.innerHTML = forumsData.map((f, i) => {
+    const st     = getStatus(f.status);
+    const done   = f.status === 'link_poste';
+    const isPost = f.status === 'message_poste';
+    const hasMsg = f.message.length > 0;
+    return `
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 fade-in ${done ? 'opacity-50' : ''}">
+      <div class="flex items-start gap-3">
+        <span class="status-dot mt-1.5 ${st.dot}"></span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-semibold text-gray-800 text-sm">${f.domain}</span>
+                <span class="text-[11px] px-2 py-0.5 rounded-full font-medium ${st.badge}">${st.label}</span>
+                <span class="text-[11px] text-gray-400">Score ${f.score}</span>
+                ${isPost ? `<span class="text-[11px] text-gray-400">J+7 le <strong class="text-gray-600">${f.edit_date}</strong></span>` : ''}
+              </div>
+              <div class="flex items-center gap-1 mt-0.5 group max-w-sm" id="url-row-${i}">
+                <a href="${f.url}" target="_blank" class="text-[11px] text-brand-500 hover:underline truncate">${f.url}</a>
+                <button onclick="editForumUrl(${i})" class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-gray-500 text-[10px] px-1 shrink-0">edit</button>
+              </div>
+              <div class="hidden mt-0.5 max-w-sm" id="url-edit-${i}">
+                <input id="url-input-${i}" type="url" value="${f.url}"
+                       class="w-full text-[11px] border border-brand-200 rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-brand-400"
+                       onkeydown="handleUrlKey(event,${i},'${f.domain}')"
+                       onblur="saveForumUrl(${i},'${f.domain}')">
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+              ${hasMsg ? `
+              <button onclick="showMessage(${i})" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">Voir message</button>
+              <button onclick="copyAndOpenDirect(${i})" class="px-3 py-1.5 text-xs bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium">Copier + Ouvrir</button>
+              ` : `<a href="${f.url}" target="_blank" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">Ouvrir</a>`}
+              <div class="relative dd-wrap">
+                <button onclick="toggleDropdown(${i})"
+                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors ${st.badge} font-medium">
+                  <span class="status-dot ${st.dot}"></span>${st.label}
+                  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div id="dd-menu-${i}" class="hidden absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 min-w-[170px] py-1">
+                  ${STATUS_OPTIONS.map(opt => `
+                  <button onclick="setStatus('${f.domain}','${opt.value}',${i})"
+                          class="w-full text-left px-4 py-2 text-xs hover:bg-gray-50 transition-colors flex items-center gap-2 ${f.status === opt.value ? 'font-semibold text-gray-800' : 'text-gray-600'}">
+                    ${opt.value ? `<span class="status-dot ${getStatus(opt.value).dot}"></span>` : '<span class="w-[7px] h-[7px]"></span>'}
+                    ${opt.label}
+                  </button>`).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2.5">
+            <textarea id="notes-${i}" placeholder="Notes..." oninput="scheduleNoteSave('${f.domain}',${i})" rows="1"
+                      class="w-full resize-none text-xs text-gray-500 placeholder-gray-300 border-0 bg-transparent px-0 py-1 border-t border-gray-100"
+            >${f.notes}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Forum actions ──────────────────────────────────────────────────────────────
+function toggleDropdown(i) {
+  const dd = document.getElementById(`dd-menu-${i}`);
+  document.querySelectorAll('[id^="dd-menu-"]').forEach(el => { if (el.id !== `dd-menu-${i}`) el.classList.add('hidden'); });
+  dd.classList.toggle('hidden');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dd-wrap')) document.querySelectorAll('[id^="dd-menu-"]').forEach(el => el.classList.add('hidden'));
+});
+
+function setStatus(domain, value, idx) {
+  document.getElementById(`dd-menu-${idx}`)?.classList.add('hidden');
+  if (!value) { forumAction(domain, 'reset'); return; }
+  if (value === 'message_poste') { openModalPosted(domain); return; }
+  forumAction(domain, 'set_status', value);
+}
+
+async function forumAction(domain, action, value = null) {
+  const entry = forumStatus[domain] || {};
+  const today = new Date().toISOString().slice(0,10);
+
+  if (action === 'reset') {
+    forumStatus[domain] = { status: null, notes: entry.notes || '' };
+  } else if (action === 'set_status') {
+    entry.status = value;
+    if (value === 'message_poste') {
+      entry.post_date = today;
+      entry.edit_date = addDays(today, 7);
+    }
+    forumStatus[domain] = entry;
+  } else if (action === 'notes') {
+    entry.notes = value;
+    forumStatus[domain] = entry;
+  } else if (action === 'url') {
+    if (value) entry.url_override = value; else delete entry.url_override;
+    forumStatus[domain] = entry;
+  } else if (action === 'url_post') {
+    entry.post_url = value;
+    forumStatus[domain] = entry;
+  }
+
+  showToast(action === 'reset' ? 'Réinitialisé' : action === 'notes' ? 'Note sauvegardée' : `Statut : ${getStatus(entry.status).label}`);
+  // Rebuild local data
+  buildAllWeeksSummary();
+  buildForumsForWeek();
+  renderForums();
+  renderWeekList();
+  checkEdits();
+  // Save to GitHub in background
+  ghWrite(forumStatusPath, forumStatus).catch(() => showToast('Erreur sauvegarde GitHub'));
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0,10);
+}
+
+function openModalPosted(domain) {
+  pendingPostedDomain = domain;
+  document.getElementById('post-url-input').value = '';
+  document.getElementById('modal-posted-domain').textContent = domain;
+  document.getElementById('modal-posted').classList.remove('hidden');
+}
+function confirmPosted() {
+  if (!pendingPostedDomain) return;
+  const url   = document.getElementById('post-url-input').value.trim();
+  const entry = forumStatus[pendingPostedDomain] || {};
+  const today = new Date().toISOString().slice(0,10);
+  entry.status    = 'message_poste';
+  entry.post_date = today;
+  entry.edit_date = addDays(today, 7);
+  entry.post_url  = url;
+  forumStatus[pendingPostedDomain] = entry;
+  closeModal('modal-posted');
+  showToast('Message posté — J+7 planifié');
+  buildAllWeeksSummary(); buildForumsForWeek();
+  renderForums(); renderWeekList(); checkEdits();
+  ghWrite(forumStatusPath, forumStatus).catch(() => showToast('Erreur GitHub'));
+  pendingPostedDomain = null;
+}
+
+function scheduleNoteSave(domain, idx) {
+  clearTimeout(notesTimers[domain]);
+  notesTimers[domain] = setTimeout(() => {
+    const val = document.getElementById(`notes-${idx}`)?.value || '';
+    forumAction(domain, 'notes', val);
+  }, 800);
+}
+
+function showMessage(idx) {
+  const f = forumsData[idx];
+  currentMessage = f.message; currentForumUrl = f.url;
+  document.getElementById('modal-domain').textContent = f.domain;
+  document.getElementById('modal-text').textContent   = f.message;
+  document.getElementById('modal-message').classList.remove('hidden');
+}
+function copyMessage()    { navigator.clipboard.writeText(currentMessage).then(() => { showToast('Message copié'); closeModal('modal-message'); }); }
+function copyAndOpen()    { navigator.clipboard.writeText(currentMessage).then(() => { window.open(currentForumUrl,'_blank'); showToast('Copié + ouvert'); closeModal('modal-message'); }); }
+function copyAndOpenDirect(idx) { const f = forumsData[idx]; navigator.clipboard.writeText(f.message).then(() => { window.open(f.url,'_blank'); showToast('Copié + ouvert'); }); }
+
+function editForumUrl(idx) {
+  document.getElementById(`url-row-${idx}`).classList.add('hidden');
+  const e = document.getElementById(`url-edit-${idx}`); e.classList.remove('hidden');
+  document.getElementById(`url-input-${idx}`).focus();
+}
+function handleUrlKey(e, idx, domain) {
+  if (e.key === 'Enter') { e.preventDefault(); saveForumUrl(idx, domain); }
+  if (e.key === 'Escape') { document.getElementById(`url-edit-${idx}`).classList.add('hidden'); document.getElementById(`url-row-${idx}`).classList.remove('hidden'); }
+}
+function saveForumUrl(idx, domain) {
+  const input = document.getElementById(`url-input-${idx}`); if (!input) return;
+  forumAction(domain, 'url', input.value.trim());
+}
+
+function toggleView(view) {
+  const weekEl = document.getElementById('view-week');
+  const overEl = document.getElementById('view-overview');
+  const nav    = document.getElementById('week-nav');
+  const btn    = document.getElementById('btn-overview');
+  if (view === 'overview') {
+    weekEl.classList.add('hidden'); overEl.classList.remove('hidden');
+    nav.classList.add('hidden');
+    document.getElementById('view-title').textContent  = `Vue globale — ${currentSite}`;
+    document.getElementById('week-periode').textContent = '';
+    btn.textContent = 'Vue semaine'; btn.onclick = () => toggleView('week');
+    renderOverview();
+  } else {
+    overEl.classList.add('hidden'); weekEl.classList.remove('hidden');
+    nav.classList.remove('hidden');
+    btn.textContent = 'Vue globale'; btn.onclick = () => toggleView('overview');
+    document.getElementById('view-title').textContent  = `Semaine ${currentWeek} — ${currentSite}`;
+    document.getElementById('week-periode').textContent = getPeriode();
+  }
+}
+
+function renderOverview() {
+  document.getElementById('overview-grid').innerHTML = allWeeksData.map(w => {
+    const num    = parseInt(w.sem.replace('Semaine ','')) || 0;
+    const pct    = w.total > 0 ? Math.round((w.done / w.total) * 100) : 0;
+    const border = pct === 100 ? 'border-green-200' : num === trueCurrentWeek ? 'border-brand-200' : 'border-gray-100';
+    const label  = pct === 100 ? 'text-green-600' : pct > 0 ? 'text-brand-600' : 'text-gray-400';
+    const bar    = pct === 100 ? 'bg-green-400'   : pct > 0 ? 'bg-brand-500'   : 'bg-gray-200';
+    return `
+    <button onclick="selectWeek(${num})"
+            class="bg-white rounded-xl border ${border} p-4 text-left hover:shadow-md transition-all fade-in">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <p class="text-sm font-semibold text-gray-800">Semaine ${num}</p>
+          <p class="text-[11px] text-gray-400 mt-0.5">${w.periode}</p>
+        </div>
+        <span class="text-xs font-bold ${label}">${pct}%</span>
+      </div>
+      <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+        <div class="h-1.5 rounded-full ${bar}" style="width:${pct}%"></div>
+      </div>
+      <p class="text-[11px] text-gray-400">${w.done} / ${w.total} traités</p>
+      ${num === trueCurrentWeek ? '<span class="inline-block mt-2 text-[10px] bg-brand-50 text-brand-600 px-2 py-0.5 rounded-full font-medium">Semaine en cours</span>' : ''}
+    </button>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LINK STACKING
+// ═══════════════════════════════════════════════════════════════════════════════
+function loadStacking() {
+  // Rebuild stacking data with current status
+  stackingData.forEach(w => {
+    w.platforms.forEach(p => {
+      const s = stackingStatus[p.plateforme] || {};
+      p.status    = s.status    || 'todo';
+      p.url_profil = s.url_profil || '';
+      p.date       = s.date       || '';
+    });
+    w.done = w.platforms.filter(p => p.status === 'done').length;
+  });
+
+  const container = document.getElementById('week-list');
+  container.innerHTML = stackingData.map((w, idx) => {
+    const pct = w.total > 0 ? Math.round((w.done / w.total) * 100) : 0;
+    const col = pct === 100 ? 'bg-green-400' : pct > 0 ? 'bg-brand-500' : 'bg-gray-200';
+    return `
+    <button onclick="selectStackingWeek(${idx})" id="stacking-week-${idx}"
+            class="week-item w-full text-left px-2 py-2 rounded-lg transition-colors ${idx === currentStackingWeekIdx ? 'active' : ''}">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs font-medium text-gray-700">${w.semaine.replace('Semaine ','S')}</span>
+        <span class="text-[10px] text-gray-400">${w.done}/${w.total}</span>
+      </div>
+      <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
+        <div class="h-1 rounded-full progress-bar ${col}" style="width:${pct}%"></div>
+      </div>
+    </button>`;
+  }).join('');
+  renderStacking();
+}
+
+function selectStackingWeek(idx) {
+  currentStackingWeekIdx = idx;
+  document.querySelectorAll('[id^="stacking-week-"]').forEach(el => el.classList.remove('active'));
+  document.getElementById(`stacking-week-${idx}`)?.classList.add('active');
+  renderStacking();
+}
+
+function renderStacking() {
+  const w = stackingData[currentStackingWeekIdx];
+  if (!w) return;
+  document.getElementById('view-title').textContent  = `${w.semaine} — Link Stacking — ${currentSite}`;
+  document.getElementById('week-periode').textContent = `${w.done}/${w.total} plateformes complétées`;
+  const DF = { oui:'bg-green-50 text-green-700 border border-green-200', non:'bg-gray-50 text-gray-500 border border-gray-200', partiel:'bg-yellow-50 text-yellow-700 border border-yellow-200' };
+  const DI = { immediat:'bg-blue-50 text-blue-600', facile:'bg-indigo-50 text-indigo-600', modere:'bg-orange-50 text-orange-600' };
+  const TY = { hub:'text-purple-600', web20:'text-blue-600', annuaire:'text-amber-600', social:'text-pink-600', profil:'text-gray-500', trust:'text-green-600' };
+
+  document.getElementById('stacking-container').innerHTML = `
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-5 py-3 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between">
+      <p class="text-xs font-semibold text-gray-600">${w.semaine} — ${w.platforms.length} plateformes</p>
+      <p class="text-xs text-gray-400">${w.done} fait · ${w.platforms.filter(p=>p.status==='skip').length} skip · ${w.platforms.filter(p=>p.status==='todo').length} restant</p>
+    </div>
+    ${w.platforms.map((p,pi) => {
+      const isDone = p.status === 'done';
+      const isSkip = p.status === 'skip';
+      return `
+      <div class="px-5 py-3.5 border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${isSkip ? 'opacity-40' : ''}">
+        <div class="flex items-start gap-4">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-medium text-sm text-gray-800">${p.plateforme}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded font-medium ${DF[p.dofollow]||DF.non}">${p.dofollow==='oui'?'DF':p.dofollow==='partiel'?'Partiel':'NF'}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded font-medium ${DI[p.difficulte]||''}">${p.difficulte}</span>
+              <span class="text-[10px] font-medium ${TY[p.type]||'text-gray-400'}">${p.type}</span>
+              ${isDone ? `<span class="text-[10px] text-gray-400">Fait le ${p.date}</span>` : ''}
+            </div>
+            ${p.notes ? `<p class="text-[11px] text-gray-400 mt-0.5">${p.notes}</p>` : ''}
+            ${isDone && p.url_profil ? `
+            <div class="mt-1 flex items-center gap-1 group">
+              <a href="${p.url_profil}" target="_blank" class="text-[11px] text-brand-500 hover:underline truncate max-w-xs">${p.url_profil}</a>
+              <button onclick="editStackingUrl('${p.plateforme}','${p.url_profil}')" class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-300 hover:text-gray-500 transition-opacity">edit</button>
+            </div>` : ''}
+            ${isDone && !p.url_profil ? `
+            <div class="mt-1">
+              <input type="url" placeholder="URL du profil (optionnel)"
+                     class="text-[11px] border-b border-gray-200 focus:border-brand-400 bg-transparent px-0 py-0.5 w-60 focus:outline-none"
+                     onblur="quickSaveStackingUrl(this,'${p.plateforme}')">
+            </div>` : ''}
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <a href="${p.url}" target="_blank" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">S'inscrire</a>
+            ${!isDone && !isSkip ? `
+            <button onclick="openModalStacking('${p.plateforme}')" class="px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">Fait</button>
+            <button onclick="stackingAction('${p.plateforme}','skip')" class="px-3 py-1.5 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg transition-colors">Skip</button>` : ''}
+            ${isDone || isSkip ? `<button onclick="stackingAction('${p.plateforme}','todo')" class="px-2 py-1.5 text-xs text-gray-300 hover:text-gray-500 transition-colors" title="Annuler">&#8635;</button>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function openModalStacking(name) {
+  pendingStackingName = name;
+  document.getElementById('stacking-url-input').value = '';
+  document.getElementById('modal-stacking-name').textContent = name;
+  document.getElementById('modal-stacking').classList.remove('hidden');
+}
+function confirmStacking() {
+  if (!pendingStackingName) return;
+  const url = document.getElementById('stacking-url-input').value.trim();
+  stackingAction(pendingStackingName, 'done', url);
+  closeModal('modal-stacking');
+}
+
+async function stackingAction(plateforme, action, url_profil = '') {
+  const entry = stackingStatus[plateforme] || {};
+  if (action === 'done') {
+    entry.status    = 'done';
+    entry.url_profil = url_profil;
+    entry.date       = new Date().toISOString().slice(0,10);
+  } else if (action === 'skip') {
+    entry.status = 'skip';
+  } else if (action === 'todo') {
+    entry.status = 'todo';
+    delete entry.url_profil; delete entry.date;
+  } else if (action === 'url_profil') {
+    entry.url_profil = url_profil;
+  }
+  stackingStatus[plateforme] = entry;
+  showToast(action === 'done' ? 'Fait ✓' : action === 'skip' ? 'Ignoré' : 'Réinitialisé');
+  loadStacking();
+  ghWrite(stackingStatusPath, stackingStatus).catch(() => showToast('Erreur GitHub'));
+}
+
+function quickSaveStackingUrl(input, plateforme) {
+  const url = input.value.trim(); if (!url) return;
+  stackingAction(plateforme, 'url_profil', url);
+}
+function editStackingUrl(plateforme, cur) {
+  const nw = prompt('URL du profil :', cur); if (nw === null) return;
+  stackingAction(plateforme, 'url_profil', nw);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BLOGS
+// ═══════════════════════════════════════════════════════════════════════════════
+function loadBlogs() {
+  const today = new Date().toISOString().slice(0,10);
+  const weeksMap = {};
+
+  allBlogsCsv.forEach(row => {
+    const domain = (row.domaine || '').trim(); if (!domain) return;
+    const sem    = (row.semaine || '').trim();
+    const s      = blogsStatus[domain] || {};
+    const statut       = s.statut        || (row.statut||'').trim() || 'planifie';
+    const date_commande = s.date_commande || (row.date_commande||'').trim();
+    const url_article   = s.url_article   || (row.url_article||'').trim();
+    const notes         = s.notes         || (row.notes||'').trim();
+
+    let majestic_due = false;
+    if (statut === 'en_ligne' && date_commande) {
+      try {
+        const dc = new Date(date_commande);
+        const due = new Date(dc); due.setDate(due.getDate() + 14);
+        if (due.toISOString().slice(0,10) <= today) majestic_due = true;
+      } catch {}
+    }
+
+    const entry = {
+      domaine: domain,
+      prix:           (row.prix||'').trim(),
+      plateforme:     (row.plateforme||'').trim(),
+      url_cible:      (row.url_cible||'').trim(),
+      ancre:          (row.ancre||'').trim(),
+      date_commande, statut, url_article, notes, majestic_due,
+    };
+    if (!weeksMap[sem]) weeksMap[sem] = [];
+    weeksMap[sem].push(entry);
+  });
+
+  blogsData = Object.entries(weeksMap)
+    .sort(([a],[b]) => (parseInt(a.replace('Semaine ',''))||0) - (parseInt(b.replace('Semaine ',''))||0))
+    .map(([sem, blogs]) => ({ semaine: sem, blogs }));
+
+  // Majestic banner
+  const allDue = blogsData.flatMap(w => w.blogs).filter(b => b.majestic_due);
+  const banner = document.getElementById('majestic-banner');
+  const mlist  = document.getElementById('majestic-list');
+  if (allDue.length && currentTab === 'blogs') {
+    banner.classList.remove('hidden');
+    mlist.innerHTML = allDue.map(b => `
+      <div class="flex items-center gap-2 bg-white border border-orange-200 rounded-lg px-3 py-2 text-xs">
+        <span class="font-semibold text-gray-700">${b.domaine}</span>
+        ${b.url_article ? `<a href="${b.url_article}" target="_blank" class="text-brand-600 hover:underline">Voir article</a>` : ''}
+        <button onclick="setBlogStatus('${b.domaine}','verifie_majestic')"
+                class="ml-auto bg-orange-100 hover:bg-orange-200 text-orange-800 px-2.5 py-1 rounded-md font-medium transition-colors">
+          Marquer vérifié
+        </button>
+      </div>`).join('');
+  } else { banner.classList.add('hidden'); }
+
+  // Sidebar
+  const container = document.getElementById('week-list');
+  if (!blogsData.length) {
+    container.innerHTML = '<p class="text-[11px] text-gray-400 px-2">Aucune donnée</p>';
+    document.getElementById('blogs-empty').classList.remove('hidden');
+    document.getElementById('blogs-container').innerHTML = '';
+    document.getElementById('view-title').textContent  = `Blogs Sponsorisés — ${currentSite}`;
+    document.getElementById('week-periode').textContent = '';
+    return;
+  }
+  document.getElementById('blogs-empty').classList.add('hidden');
+  container.innerHTML = blogsData.map((w, idx) => {
+    const total = w.blogs.length;
+    const done  = w.blogs.filter(b => b.statut === 'verifie_majestic' || b.statut === 'en_ligne').length;
+    const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+    const col   = pct === 100 ? 'bg-green-400' : pct > 0 ? 'bg-brand-500' : 'bg-gray-200';
+    return `
+    <button onclick="selectBlogsWeek(${idx})" id="blogs-week-${idx}"
+            class="week-item w-full text-left px-2 py-2 rounded-lg transition-colors ${idx === currentBlogsWeekIdx ? 'active' : ''}">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-xs font-medium text-gray-700">${w.semaine.replace('Semaine ','S')}</span>
+        <span class="text-[10px] text-gray-400">${done}/${total}</span>
+      </div>
+      <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
+        <div class="h-1 rounded-full progress-bar ${col}" style="width:${pct}%"></div>
+      </div>
+    </button>`;
+  }).join('');
+  renderBlogsWeek();
+}
+
+function selectBlogsWeek(idx) {
+  currentBlogsWeekIdx = idx;
+  document.querySelectorAll('[id^="blogs-week-"]').forEach(el => el.classList.remove('active'));
+  document.getElementById(`blogs-week-${idx}`)?.classList.add('active');
+  renderBlogsWeek();
+}
+
+function renderBlogsWeek() {
+  const w = blogsData[currentBlogsWeekIdx]; if (!w) return;
+  document.getElementById('view-title').textContent  = `${w.semaine} — Blogs Sponsorisés — ${currentSite}`;
+  document.getElementById('week-periode').textContent = `${w.blogs.length} lien${w.blogs.length>1?'s':''}`;
+
+  document.getElementById('blogs-container').innerHTML = w.blogs.map((b, bi) => {
+    const st = BLOG_STATUS_LABELS[b.statut] || BLOG_STATUS_LABELS.planifie;
+    const nextStatus = BLOG_STATUSES[BLOG_STATUSES.indexOf(b.statut) + 1];
+    const nextLabel  = nextStatus ? (BLOG_STATUS_LABELS[nextStatus]?.label || nextStatus) : null;
+    return `
+    <div class="bg-white rounded-xl border ${b.majestic_due ? 'border-orange-200' : 'border-gray-100'} shadow-sm px-5 py-4 fade-in">
+      <div class="flex items-start gap-4">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-semibold text-sm text-gray-800">${b.domaine}</span>
+            <span class="text-[11px] px-2 py-0.5 rounded-full font-medium ${st.badge}">${st.label}</span>
+            ${b.majestic_due ? '<span class="text-[11px] px-2 py-0.5 rounded-full font-medium text-orange-700 bg-orange-50 border border-orange-200">Vérifier Majestic</span>' : ''}
+            ${b.prix ? `<span class="text-[11px] text-gray-500 font-medium">${b.prix}€</span>` : ''}
+            ${b.plateforme ? `<span class="text-[11px] text-gray-400">${b.plateforme}</span>` : ''}
+          </div>
+          <div class="flex items-center gap-4 mt-1 flex-wrap">
+            ${b.ancre ? `<p class="text-[11px] text-gray-500">Ancre : <strong>${b.ancre}</strong></p>` : ''}
+            ${b.url_cible ? `<a href="${b.url_cible}" target="_blank" class="text-[11px] text-brand-500 hover:underline">${b.url_cible}</a>` : ''}
+            ${b.date_commande ? `<p class="text-[11px] text-gray-400">Commandé le ${b.date_commande}</p>` : ''}
+          </div>
+          <div class="mt-1.5" id="blog-url-wrap-${bi}">
+            <div class="flex items-center gap-1 group">
+              ${b.url_article
+                ? `<a href="${b.url_article}" target="_blank" class="text-[11px] text-brand-500 hover:underline truncate max-w-xs">${b.url_article}</a>
+                   <button onclick="editBlogUrl(${bi},'${b.domaine}')" class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-300 hover:text-gray-500 transition-opacity">edit</button>`
+                : `<button onclick="editBlogUrl(${bi},'${b.domaine}')" class="text-[11px] text-gray-300 italic hover:text-gray-500">+ Ajouter URL article</button>`}
+            </div>
+            <div class="hidden mt-1" id="blog-url-edit-${bi}">
+              <input type="url" value="${b.url_article}" placeholder="https://blog.com/article..."
+                     class="text-[11px] border border-brand-200 rounded px-2 py-0.5 w-72 focus:outline-none focus:ring-1 focus:ring-brand-400"
+                     onkeydown="handleBlogUrlKey(event,this,'${b.domaine}',${bi})"
+                     onblur="saveBlogUrl(this,'${b.domaine}',${bi})">
+            </div>
+          </div>
+          ${b.notes ? `<p class="text-[11px] text-gray-400 mt-1">${b.notes}</p>` : ''}
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          ${nextLabel ? `<button onclick="setBlogStatus('${b.domaine}','${nextStatus}')"
+            class="px-3 py-1.5 text-xs bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium whitespace-nowrap">&rarr; ${nextLabel}</button>` : ''}
+          ${b.statut !== 'planifie' ? `<button onclick="setBlogStatus('${b.domaine}','planifie')"
+            class="px-2 py-1.5 text-xs text-gray-300 hover:text-gray-500 transition-colors" title="Reset">&#8635;</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editBlogUrl(bi, domain) {
+  document.getElementById(`blog-url-edit-${bi}`).classList.remove('hidden');
+  document.getElementById(`blog-url-edit-${bi}`).querySelector('input').focus();
+}
+function handleBlogUrlKey(e, input, domain, bi) {
+  if (e.key === 'Enter') { e.preventDefault(); saveBlogUrl(input, domain, bi); }
+  if (e.key === 'Escape') { document.getElementById(`blog-url-edit-${bi}`).classList.add('hidden'); }
+}
+function saveBlogUrl(input, domain, bi) {
+  const url = input.value.trim();
+  const entry = blogsStatus[domain] || {};
+  entry.url_article = url;
+  blogsStatus[domain] = entry;
+  showToast('URL article sauvegardée');
+  loadBlogs();
+  ghWrite(blogsStatusPath, blogsStatus).catch(() => showToast('Erreur GitHub'));
+}
+
+async function setBlogStatus(domain, statut) {
+  const entry = blogsStatus[domain] || {};
+  entry.statut = statut;
+  if (statut === 'commande' && !entry.date_commande) {
+    entry.date_commande = new Date().toISOString().slice(0,10);
+  }
+  blogsStatus[domain] = entry;
+  showToast(`Statut : ${BLOG_STATUS_LABELS[statut]?.label || statut}`);
+  loadBlogs();
+  ghWrite(blogsStatusPath, blogsStatus).catch(() => showToast('Erreur GitHub'));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// URLS VIEW
+// ═══════════════════════════════════════════════════════════════════════════════
+function showUrlsView() {
+  ['view-week','view-overview','view-stacking','view-blogs'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
+  document.getElementById('view-urls').classList.remove('hidden');
+  document.getElementById('view-title').textContent  = `URLs postées — ${currentSite}`;
+  document.getElementById('week-periode').textContent = '';
+  document.getElementById('week-nav').classList.add('hidden');
+  document.getElementById('btn-overview').classList.add('hidden');
+  renderUrlsView();
+}
+function hideUrlsView() {
+  document.getElementById('view-urls').classList.add('hidden');
+  switchTab(currentTab);
+}
+
+function renderUrlsView() {
+  const filter = document.getElementById('url-filter').value;
+  const rows = [];
+  Object.entries(forumStatus).forEach(([domain, s]) => {
+    const st = s.status || '';
+    if (!st) return;
+    if (filter && st !== filter) return;
+    const row = allForumsCsv.find(r => (r.domaine||'').trim() === domain) || {};
+    rows.push({
+      domain, semaine: (row.semaine||'').trim(),
+      post_url: s.post_url||'', status: st,
+      post_date: s.post_date||'', edit_date: s.edit_date||'',
+    });
+  });
+  rows.sort((a,b) => a.semaine.localeCompare(b.semaine) || a.domain.localeCompare(b.domain));
+
+  const tbody = document.getElementById('urls-tbody');
+  const emptyMsg = document.getElementById('urls-empty-msg');
+
+  if (!rows.length) {
+    tbody.innerHTML = '';
+    emptyMsg.classList.remove('hidden');
+    return;
+  }
+  emptyMsg.classList.add('hidden');
+  tbody.innerHTML = rows.map((r, i) => {
+    const st = getStatus(r.status);
+    return `
+    <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+      <td class="px-5 py-3 text-xs text-gray-300">${i+1}</td>
+      <td class="px-5 py-3 text-xs font-medium text-gray-800">${r.domain}</td>
+      <td class="px-5 py-3 text-xs text-gray-500">${r.semaine}</td>
+      <td class="px-5 py-3 text-xs">
+        ${r.post_url ? `<a href="${r.post_url}" target="_blank" class="text-brand-500 hover:underline break-all">${r.post_url}</a>` : '<span class="text-gray-300 italic">—</span>'}
+      </td>
+      <td class="px-5 py-3">
+        <span class="text-[11px] px-2 py-0.5 rounded-full font-medium ${st.badge}">${st.label}</span>
+      </td>
+      <td class="px-5 py-3 text-xs text-gray-500">${r.post_date || '—'}</td>
+      <td class="px-5 py-3 text-xs ${r.edit_date ? 'text-gray-600 font-medium' : 'text-gray-300'}">${r.edit_date || '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function copyVisibleUrls() {
+  const filter = document.getElementById('url-filter').value;
+  const urls = Object.entries(forumStatus)
+    .filter(([,s]) => s.status && (!filter || s.status === filter) && s.post_url)
+    .map(([,s]) => s.post_url);
+  if (!urls.length) { showToast('Aucune URL'); return; }
+  navigator.clipboard.writeText(urls.join('\n')).then(() => showToast(`${urls.length} URL${urls.length>1?'s':''} copiée${urls.length>1?'s':''}`));
+}
+
+function exportUrlsCsv() {
+  const filter = document.getElementById('url-filter').value;
+  const rows = [['domaine','semaine','post_url','status','post_date','edit_date']];
+  Object.entries(forumStatus).forEach(([domain, s]) => {
+    const st = s.status || ''; if (!st) return;
+    if (filter && st !== filter) return;
+    const row = allForumsCsv.find(r => (r.domaine||'').trim() === domain) || {};
+    rows.push([domain, (row.semaine||'').trim(), s.post_url||'', st, s.post_date||'', s.edit_date||'']);
+  });
+  const csv = rows.map(r => r.map(c => `"${(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `ninjalinking_${currentSite}.csv`;
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+['modal-message','modal-posted','modal-stacking'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(id); });
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.add('hidden'), 2200);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════════════════════════
+(async () => {
+  const cfg = getCfg();
+  if (!cfg.token || !cfg.owner || !cfg.repo) {
+    showSetup();
+  } else {
+    await bootApp();
+  }
+})();
+</script>
+</body>
+</html>

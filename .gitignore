@@ -1,0 +1,15 @@
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+*.log
+
+# Flask app (plus nécessaire pour GitHub Pages)
+app.py
+mailer.py
+requirements.txt
+Procfile
+templates/
+Lancer Dashboard.command

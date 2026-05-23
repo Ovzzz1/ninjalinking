@@ -1,0 +1,46 @@
+semaine,plateforme,url_inscription,dofollow,difficulte,type,notes
+Semaine 1,Crunchbase,https://crunchbase.com/add-new,non,facile,hub,Créer fiche Organisation. DA 90+.
+Semaine 1,About.me,https://about.me,oui,immediat,profil,Dofollow. Page vitrine. 3 min.
+Semaine 1,GitHub,https://github.com,non,facile,profil,Créer une Organisation publique. README minimaliste.
+Semaine 1,Wellfound,https://wellfound.com/company/new,non,facile,hub,Profil entreprise startup. DA très élevé.
+Semaine 1,ProductHunt,https://producthunt.com,non,immediat,hub,Soumettre le site comme produit.
+Semaine 1,IndieHackers,https://indiehackers.com,oui,facile,hub,Profil fondateur + page produit. Dofollow.
+Semaine 1,Linktree,https://linktr.ee,non,immediat,profil,Agrège tous les profils. Faire en dernier.
+Semaine 1,Gravatar,https://gravatar.com,oui,immediat,profil,Lier à contact@[domaine].fr. Dofollow.
+Semaine 2,YouTube,https://youtube.com/channel/new,non,immediat,social,Chaîne au nom du site. À propos avec lien.
+Semaine 2,LinkedIn Company,https://linkedin.com/company/setup/new,non,facile,social,Page entreprise. Signal légitimité fort.
+Semaine 2,Facebook Page,https://facebook.com/pages/create,non,immediat,social,NAP complet dans À propos.
+Semaine 2,Pinterest Business,https://pinterest.fr/business/create,non,immediat,social,Profil vérifié avec lien site.
+Semaine 2,X (Twitter),https://x.com,non,immediat,social,Bio + URL. Google crawle Twitter.
+Semaine 2,Tumblr,https://tumblr.com,oui,immediat,web20,1-2 posts avec lien. Dofollow.
+Semaine 2,Dev.to,https://dev.to,oui,immediat,profil,Profil + 1 article court. Dofollow.
+Semaine 2,GitLab,https://gitlab.com,non,immediat,profil,Profil org.
+Semaine 2,Stack Overflow,https://stackoverflow.com,non,facile,profil,Profil avec URL. DA 90+.
+Semaine 3,Medium,https://medium.com,non,immediat,web20,1 article 500-800 mots avec lien dans le texte.
+Semaine 3,WordPress.com,https://wordpress.com,oui,immediat,web20,Blog [marque].wordpress.com. 1-2 articles. Dofollow.
+Semaine 3,Blogger,https://blogger.com,oui,immediat,web20,[marque].blogspot.com. Indexation ultra-rapide (Google).
+Semaine 3,Google Sites,https://sites.google.com,oui,immediat,web20,Micro-page À propos de [Marque].
+Semaine 3,Substack,https://substack.com,non,immediat,web20,1 édition + bio avec lien.
+Semaine 3,Notion.site,https://notion.so,oui,immediat,web20,Page publique de présentation. Google indexe bien.
+Semaine 4,Webwiki.fr,https://webwiki.fr/add,oui,immediat,annuaire,Soumettre URL. Dofollow rapide.
+Semaine 4,Gralon.net,https://gralon.net/ajouter-son-site.htm,oui,modere,annuaire,Description 150+ mots. Modération 3-7j.
+Semaine 4,Annuaire-du-web,https://annuaire-du-web.net,oui,modere,annuaire,Dofollow gratuit. Modération légère.
+Semaine 4,Meilleur du Web,https://meilleurduweb.com,oui,modere,annuaire,Exige contenu de qualité sur le site soumis.
+Semaine 4,Trustpilot,https://trustpilot.com,non,facile,trust,Réclamer page du domaine via contact@[domaine].fr.
+Semaine 4,Yelp.fr,https://yelp.fr/biz/add,non,modere,trust,Validation VoIP. Signal trust fort.
+Semaine 4,Foursquare,https://foursquare.com/add-a-place,non,immediat,trust,Propagation sur 100+ apps.
+Semaine 4,Curlie,https://curlie.org,non,modere,annuaire,Signal éditorial fort. Délai semaines. Faire tôt.
+Semaine 5,Justacote,https://justacote.com,non,immediat,annuaire,Ultra laxiste. Validation email.
+Semaine 5,HotFrog.fr,https://hotfrog.fr,non,immediat,annuaire,Validation 1 clic.
+Semaine 5,Opendi.fr,https://opendi.fr,non,immediat,annuaire,Email uniquement.
+Semaine 5,Yalwa.fr,https://yalwa.fr,non,immediat,annuaire,Basique et rapide.
+Semaine 5,Cylex France,https://cylex-france.fr,partiel,facile,annuaire,Vérifier fiche auto-créée à réclamer.
+Semaine 5,Behance,https://behance.net,non,immediat,profil,Uploader visuels du site. Bio avec lien. DA Adobe.
+Semaine 5,SlideShare,https://slideshare.net,non,immediat,profil,Uploader PDF 2-3 slides. Page indexée.
+Semaine 5,Scribd,https://scribd.com,non,immediat,profil,Upload PDF de présentation.
+Semaine 6,BuyMeACoffee,https://buymeacoffee.com,non,immediat,profil,Profil Soutenez le blog.
+Semaine 6,Gumroad,https://gumroad.com,non,facile,profil,PDF gratuit à télécharger. Page produit DA 90.
+Semaine 6,Eventbrite,https://eventbrite.com,non,facile,profil,Compte organisateur. Page indexée par Google.
+Semaine 6,Kickstarter,https://kickstarter.com,oui,facile,profil,Profil créateur. Dofollow en bas de page.
+Semaine 6,Disqus,https://disqus.com,non,immediat,profil,Compte = backlink.
+Semaine 6,Reddit,https://reddit.com,non,facile,social,Squatter u/[marque] + créer r/[marque].

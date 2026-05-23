@@ -1,0 +1,62 @@
+{
+  "fortdissy.info": {
+    "url_override": "https://fortdissy.info/forum/viewtopic.php?p=145017#p145017",
+    "status": "banned",
+    "post_date": "2026-04-27",
+    "post_url": "https://fortdissy.info/forum/viewtopic.php?p=145017#p145017",
+    "edit_date": "2026-05-04"
+  },
+  "lesptitesrenault.fr": {
+    "notes": "wait modo",
+    "status": "banned"
+  },
+  "forum-hifi.fr": {
+    "status": "banned"
+  },
+  "forumcampingcar.fr": {
+    "status": "link_poste",
+    "post_date": "2026-04-27",
+    "post_url": "",
+    "edit_date": "2026-05-04",
+    "url_override": "https://www.campingcaraide.fr/viewtopic.php?p=187966#p187966"
+  },
+  "varadero125.fr": {
+    "status": "attente_modo",
+    "notes": "mail modo wait"
+  },
+  "amoureux203-403.com": {
+    "status": "attente_modo",
+    "notes": "mail modo wait"
+  },
+  "club-mercedes-passion.com": {
+    "url_override": "https://www.club-mercedes-passion.com/forum/viewtopic.php?f=21&t=23169&p=278958#p278958",
+    "status": "message_poste",
+    "post_date": "2026-05-04",
+    "post_url": "",
+    "edit_date": "2026-05-11"
+  },
+  "forum-ulm-ela-lsa.net": {
+    "url_override": "https://forum-ulm-ela-lsa.net/viewtopic.php?f=81&t=13130",
+    "status": "message_poste",
+    "post_date": "2026-05-04",
+    "post_url": "",
+    "edit_date": "2026-05-11",
+    "notes": ":essage posté mais attente modo valide"
+  },
+  "504.org": {
+    "status": "banned",
+    "notes": "inscription pas dispo"
+  },
+  "vstrom.fr": {
+    "status": "attente_modo",
+    "notes": "inscription attente modo : done et à post"
+  },
+  "gs500.pl": {
+    "status": "banned",
+    "notes": "site dead"
+  },
+  "rc-vintage.com": {
+    "status": "attente_modo",
+    "notes": "inscription attente modo"
+  }
+}

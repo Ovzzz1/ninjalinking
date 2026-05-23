@@ -1,0 +1,54 @@
+{
+  "500rgas.info": {
+    "url_override": "https://500rgas.info/forum/viewtopic.php?p=140724#p140724",
+    "status": "link_poste",
+    "post_date": "2026-04-21",
+    "post_url": "",
+    "edit_date": "2026-04-28"
+  },
+  "rallye-game.fr": {
+    "url_override": "https://rallye-game.fr/forum/viewtopic.php?p=90556#p90556",
+    "status": "link_poste",
+    "post_date": "2026-04-21",
+    "post_url": "",
+    "edit_date": "2026-04-28"
+  },
+  "binano.fr": {
+    "url_override": "https://www.binano.fr/viewtopic.php?p=1322437#p1322437",
+    "notes": "post : attete modo check",
+    "status": "banned"
+  },
+  "gladius.fr": {
+    "url_override": "https://www.gladius.fr/viewtopic.php?p=254646#p254646",
+    "status": "link_poste"
+  },
+  "andlil.com": {
+    "status": "message_poste",
+    "post_date": "2026-04-27",
+    "post_url": "",
+    "edit_date": "2026-05-04",
+    "url_override": "https://www.andlil.com/forum/viewtopic.php?f=31&t=74550&start=0",
+    "notes": "modo doit valdier message je crois\n"
+  },
+  "brassageamateur.com": {
+    "url_override": "https://www.brassageamateur.com/forum/viewtopic.php?p=528612&p=528612",
+    "status": "banned",
+    "post_date": "2026-04-27",
+    "post_url": "",
+    "edit_date": "2026-05-04"
+  },
+  "autohacking.net": {
+    "url_override": "https://www.motorcarsoft.com/viewtopic.php?f=55&t=22140&p=179128#p179128",
+    "status": "link_poste",
+    "post_date": "2026-04-27",
+    "post_url": "",
+    "edit_date": "2026-05-04"
+  },
+  "campingcaraide.fr": {
+    "url_override": "https://www.campingcaraide.fr/viewtopic.php?p=187823#p187823",
+    "status": "link_poste",
+    "post_date": "2026-04-27",
+    "post_url": "",
+    "edit_date": "2026-05-04"
+  }
+}

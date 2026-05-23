@@ -1,0 +1,37 @@
+{
+  "aquajardin.net": {
+    "status": "attente_modo"
+  },
+  "forumveranda.fr": {
+    "url_override": "https://www.forumveranda.fr/viewtopic.php?p=18882#p18882",
+    "status": "link_poste",
+    "post_date": "2026-04-27",
+    "post_url": "",
+    "edit_date": "2026-05-04"
+  },
+  "jardinature.net": {
+    "status": "attente_modo"
+  },
+  "jardins-du-nord.fr": {
+    "url_override": "https://www.jardins-du-nord.fr/viewtopic.php?p=290544#p290544",
+    "status": "attente_modo",
+    "post_date": "2026-04-27",
+    "post_url": "",
+    "edit_date": "2026-05-04"
+  },
+  "arsun-concept.com": {
+    "status": "attente_modo",
+    "notes": "wait modo mail"
+  },
+  "aujardin.org": {
+    "url_override": "https://www.aujardin.org/viewtopic.php?p=3183666#p3183666",
+    "status": "message_poste",
+    "post_date": "2026-05-04",
+    "post_url": "",
+    "edit_date": "2026-05-11"
+  },
+  "bulle-immobiliere.org": {
+    "status": "attente_modo",
+    "notes": "wait modo mail"
+  }
+}
