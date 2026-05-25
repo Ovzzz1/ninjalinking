@@ -93,7 +93,11 @@
     "notes": "inscription done"
   },
   "trafic-amenage.com": {
-    "notes": "inscription done"
+    "notes": "inscription done",
+    "status": "message_poste",
+    "post_date": "2026-05-25",
+    "edit_date": "2026-06-01",
+    "post_url": "https://www.trafic-amenage.com/forum/viewtopic.php?p=749407#p749407"
   },
   "stargate-fusion.com": {
     "status": "attente_modo"
