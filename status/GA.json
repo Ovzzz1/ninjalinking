@@ -116,7 +116,10 @@
     "post_url": "https://vstrom.fr/viewtopic.php?p=11384#p11384"
   },
   "2temps.fr": {
-    "status": "attente_email"
+    "status": "message_poste",
+    "post_date": "2026-05-25",
+    "edit_date": "2026-06-01",
+    "post_url": "https://forum.2temps.fr/viewtopic.php?t=22487"
   },
   "300cpassion.com": {
     "status": "attente_email"
