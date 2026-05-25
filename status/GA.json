@@ -81,7 +81,10 @@
     "status": "attente_modo"
   },
   "lestracteursrouges.com": {
-    "status": "attente_modo"
+    "status": "message_poste",
+    "post_date": "2026-05-25",
+    "edit_date": "2026-06-01",
+    "post_url": "https://lestracteursrouges.com/forum/viewtopic.php?p=511466#p511466"
   },
   "techniarabia.com": {
     "notes": "inscription done"
