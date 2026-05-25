@@ -78,7 +78,10 @@
     "url_override": "https://forumcbr125.com/viewtopic.php?f=2&t=5090"
   },
   "hondacx.com": {
-    "status": "attente_modo"
+    "status": "message_poste",
+    "post_date": "2026-05-25",
+    "edit_date": "2026-06-01",
+    "post_url": "http://www.hondacx.com/viewtopic.php?p=156782#p156782"
   },
   "lestracteursrouges.com": {
     "status": "message_poste",
