@@ -88,5 +88,8 @@
   },
   "trafic-amenage.com": {
     "notes": "inscription done"
+  },
+  "stargate-fusion.com": {
+    "status": "attente_modo"
   }
 }
