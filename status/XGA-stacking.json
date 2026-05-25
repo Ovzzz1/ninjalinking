@@ -1,15 +1,11 @@
 {
   "IndieHackers": {
-    "status": "done",
-    "url_profil": "https://www.indiehackers.com/garageraymond",
-    "date": "2026-05-23"
+    "status": "todo"
   },
   "Gravatar": {
     "status": "todo"
   },
   "GitHub": {
-    "status": "done",
-    "url_profil": "https://github.com/garageraymond",
-    "date": "2026-05-23"
+    "status": "todo"
   }
 }
