@@ -125,7 +125,10 @@
     "status": "link_poste"
   },
   "350rdlc.fr": {
-    "status": "attente_modo"
+    "status": "message_poste",
+    "post_date": "2026-05-25",
+    "edit_date": "2026-06-01",
+    "post_url": "https://www.300cpassion.com/memberlist.php?mode=viewprofile&u=50913"
   },
   "39-45.org": {
     "status": "attente_email"
